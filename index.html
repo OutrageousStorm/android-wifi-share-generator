@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WiFi QR Generator</title>
+  <style>
+    :root { --bg: #0f1117; --surface: #1a1d27; --accent: #38bdf8; --danger: #f87171; --ok: #4ade80; }
+    * { box-sizing: border-box; }
+    body { background: var(--bg); color: #e2e8f0; font-family: system-ui; padding: 24px; }
+    .container { max-width: 600px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin-bottom: 24px; }
+    .form { background: var(--surface); border-radius: 8px; padding: 24px; }
+    label { display: block; margin-top: 12px; font-size: 0.9rem; color: #94a3b8; }
+    input, select { width: 100%; padding: 8px; border: 1px solid #334155; border-radius: 6px; background: #0f1117; color: #e2e8f0; margin-top: 4px; }
+    button { width: 100%; padding: 12px; margin-top: 20px; background: var(--accent); color: #000; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    button:hover { opacity: 0.9; }
+    #output { margin-top: 32px; text-align: center; }
+    #qrcode { display: inline-block; border: 2px solid var(--accent); border-radius: 8px; padding: 12px; background: white; }
+    .info { margin-top: 8px; font-size: 0.85rem; color: #94a3b8; }
+    .checkbox { display: flex; gap: 8px; }
+    .checkbox input { width: auto; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>📡 WiFi QR Generator</h1>
+    
+    <div class="form">
+      <label>Network name (SSID)</label>
+      <input type="text" id="ssid" placeholder="MyNetwork" required>
+      
+      <label>Password</label>
+      <input type="password" id="password" placeholder="(leave blank for open network)">
+      
+      <label>Security</label>
+      <select id="security">
+        <option>WPA</option>
+        <option>WPA2</option>
+        <option>WPA3</option>
+        <option>WEP</option>
+        <option>open</option>
+      </select>
+      
+      <label class="checkbox">
+        <input type="checkbox" id="hidden">
+        Hidden network
+      </label>
+      
+      <button onclick="generate()">Generate QR Code</button>
+    </div>
+    
+    <div id="output"></div>
+  </div>
+
+  <script>
+    function wifiString(ssid, password, security, hidden) {
+      const secMap = { WEP: 'WEP', WPA: 'WPA', WPA2: 'WPA', WPA3: 'WPA', open: 'nopass' };
+      const t = secMap[security] || 'WPA';
+      const ssidEsc = ssid.replace(/\\/g, '\\\\').replace(/;/g, '\\;');
+      const passEsc = password ? password.replace(/\\/g, '\\\\').replace(/;/g, '\\;') : '';
+      
+      let s = `WIFI:T:${t};S:${ssidEsc};`;
+      if (password) s += `P:${passEsc};`;
+      if (hidden) s += 'H:true;';
+      s += ';;';
+      return s;
+    }
+
+    function generate() {
+      const ssid = document.getElementById('ssid').value;
+      const password = document.getElementById('password').value;
+      const security = document.getElementById('security').value;
+      const hidden = document.getElementById('hidden').checked;
+      
+      if (!ssid) { alert('Enter network name'); return; }
+      
+      const wifiStr = wifiString(ssid, password, security, hidden);
+      console.log('WiFi string:', wifiStr);
+      
+      const output = document.getElementById('output');
+      output.innerHTML = '<div id="qrcode"></div><div class="info"><p>Scan with Android 10+ to auto-connect</p></div>';
+      
+      new QRCode(document.getElementById('qrcode'), {
+        text: wifiStr,
+        width: 256,
+        height: 256,
+        correctLevel: QRCode.CorrectLevel.H,
+      });
+    }
+  </script>
+</body>
+</html>
